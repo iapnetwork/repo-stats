@@ -21,18 +21,18 @@ type Configuration struct {
 // Repository contains the properties for the git repository.
 type Repository struct {
 	Name           string
-	Private        bool
-	Size           float64
+	Visibility     string
+	Size           int
 	Statistics     []Statistic
-	TotalCommits   float64
-	TotalAdditions float64
-	TotalDeletions float64
+	TotalCommits   int64
+	TotalAdditions int64
+	TotalDeletions int64
 	NumberAuthors  int
 }
 
 // Statistic contains the properties for the total repository statistics.
 type Statistic struct {
-	Total  float64
+	Total  int64
 	Weeks  []Week
 	Author string
 }
@@ -40,9 +40,9 @@ type Statistic struct {
 // Week contains the properties for weekly consolidated data.
 type Week struct {
 	WeekNumber string
-	Additions  float64
-	Deletions  float64
-	Commits    float64
+	Additions  int64
+	Deletions  int64
+	Commits    int64
 }
 
 func check(e error) {
@@ -149,8 +149,8 @@ func outputMarkdown(repositories []Repository) {
 	fmt.Fprint(outputFile, "The data below is the output of the `repo-stats.go` package.\n\n")
 	fmt.Fprint(outputFile, "## All Repositories\n\n")
 
-	fmt.Fprintln(outputFile, "Repository Name | Private | Size (kb) | Commits | Additions | Deletions | Authors")
-	fmt.Fprintln(outputFile, "--------------- | ------- | --------- | ------- | --------- | --------- | -------")
+	fmt.Fprintln(outputFile, "Repository Name | Visibility | Size (kb) | Commits | Additions | Deletions | Authors")
+	fmt.Fprintln(outputFile, "--------------- | ---------- | --------- | ------- | --------- | --------- | -------")
 	outputFile.Sync()
 
 	// Closures to order the Repository structure.
@@ -162,7 +162,7 @@ func outputMarkdown(repositories []Repository) {
 	By(size).Sort(repositories)
 
 	for i := range repositories {
-		fmt.Fprintf(outputFile, "%s | %t | %d | %d | %d | %d | %d\n", string(repositories[i].Name), bool(repositories[i].Private), int(repositories[i].Size), int(repositories[i].TotalCommits), int(repositories[i].TotalAdditions), int(repositories[i].TotalDeletions), int(repositories[i].NumberAuthors))
+		fmt.Fprintf(outputFile, "%s | %s | %d | %d | %d | %d | %d\n", repositories[i].Name, repositories[i].Visibility, repositories[i].Size, repositories[i].TotalCommits, repositories[i].TotalAdditions, repositories[i].TotalDeletions, repositories[i].NumberAuthors)
 	}
 	outputFile.Sync()
 }
@@ -183,9 +183,15 @@ func main() {
 	// Loop through the slice, building the Repository struct.
 	for i := range repoList {
 		repoName := repoList[i].(map[string]interface{})["name"].(string)
-
 		private := repoList[i].(map[string]interface{})["private"].(bool)
-		size := repoList[i].(map[string]interface{})["size"].(float64)
+
+		// Visibility is listed in the markdown as either Public or Private.
+		visibility := "public"
+		if private {
+			visibility = "private"
+		}
+
+		size := int(repoList[i].(map[string]interface{})["size"].(float64))
 
 		// For each repo, get the contributor statistics.
 		URIStatsItem := strings.Replace(configuration.URIStats, ":repo", repoName, 1)
@@ -195,10 +201,10 @@ func main() {
 		statistics := make([]Statistic, len(statsList))
 
 		// Declare the totals counters.
-		var totalCommits float64 = 0
-		var totalAdditions float64 = 0
-		var totalDeletions float64 = 0
-		var numberAuthors int = 0
+		var totalCommits int64
+		var totalAdditions int64
+		var totalDeletions int64
+		var numberAuthors int
 
 		// Loop through the slice, building the Statistics struct.
 		for j := range statsList {
@@ -206,7 +212,7 @@ func main() {
 			statsItem := statsList[j].(map[string]interface{})
 
 			// Set the total value
-			total := statsItem["total"].(float64)
+			total := int64(statsItem["total"].(float64))
 
 			// Get the "weeks" json object.
 			weeksList := statsItem["weeks"].([]interface{})
@@ -220,16 +226,16 @@ func main() {
 				weekItem := weeksList[k].(map[string]interface{})
 				weekNumberUnix := weekItem["w"].(float64)
 				weekNumber := time.Unix(int64(weekNumberUnix), 0).Format(time.RFC3339)
-				additions := weekItem["a"].(float64)
-				deletions := weekItem["d"].(float64)
-				commits := weekItem["c"].(float64)
+				additions := int64(weekItem["a"].(float64))
+				deletions := int64(weekItem["d"].(float64))
+				commits := int64(weekItem["c"].(float64))
 
 				totalAdditions += additions
 				totalDeletions += deletions
 				totalCommits += commits
 
 				// Add the values to the Week slice.
-				weeks[int(k)] = Week{string(weekNumber), float64(additions), float64(deletions), float64(commits)}
+				weeks[k] = Week{weekNumber, additions, deletions, commits}
 			}
 
 			author := statsItem["author"].(map[string]interface{})
@@ -238,13 +244,12 @@ func main() {
 			// The json response is sectioned by authors - increment the counter.
 			numberAuthors++
 
-			statistics[j] = Statistic{float64(total), weeks, string(contributor)}
+			// Add the values to the Statistic slice.
+			statistics[j] = Statistic{total, weeks, contributor}
 		}
 
 		// Add the values to the Repository struct.
-		repositories[i] = Repository{repoName, bool(private), float64(size), statistics, totalCommits, totalAdditions, totalDeletions, numberAuthors}
-		//fmt.Fprintf(outputFile, "%s | %t | %d | %d | %d | %d | %d\n", string(repoName), bool(private), int(size), int(totalCommits), int(totalAdditions), int(totalDeletions), int(numberAuthors))
-		//outputFile.Sync()
+		repositories[i] = Repository{repoName, visibility, size, statistics, totalCommits, totalAdditions, totalDeletions, numberAuthors}
 	}
 
 	// Output the repositories in size order.
