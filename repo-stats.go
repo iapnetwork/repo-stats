@@ -86,8 +86,8 @@ func (s *repoSorter) Less(i, j int) bool {
 	return s.by(&s.repositories[i], &s.repositories[j])
 }
 
-// SetConfiguration adds all of the json config settings into the struct.
-func SetConfiguration(file string) Configuration {
+// setConfiguration adds all of the json config settings into the struct.
+func setConfiguration(file string) Configuration {
 	// Get the config json into the Configuration struct.
 	var configuration Configuration
 	configJson, err := os.Open(file)
@@ -98,8 +98,8 @@ func SetConfiguration(file string) Configuration {
 	return configuration
 }
 
-// SetRequest creates and sends the request.
-func SetRequest(uri string, token string) []byte {
+// setRequest creates and sends the request.
+func setRequest(uri string, token string) []byte {
 	// Set up the request.
 	client := &http.Client{}
 	request, err := http.NewRequest("GET", uri, nil)
@@ -113,15 +113,15 @@ func SetRequest(uri string, token string) []byte {
 	return jsonData
 }
 
-// GetJsonResponse gets the full json object returned from the Request.
-func GetJsonResponse(uri string, token string, fixer string) []interface{} {
+// getJsonResponse gets the full json object returned from the Request.
+func getJsonResponse(uri string, token string, fixer string) []interface{} {
 	// Set up the request.
-	jsonData := SetRequest(uri, token)
+	jsonData := setRequest(uri, token)
 	jsonText := string(jsonData)
 
 	// Github sometimes returns empty stats data for the repo, so try again.
 	if jsonText == "{}" {
-		jsonData = SetRequest(uri, token)
+		jsonData = setRequest(uri, token)
 		jsonText = string(jsonData)
 	}
 
@@ -137,13 +137,8 @@ func GetJsonResponse(uri string, token string, fixer string) []interface{} {
 	return dataList
 }
 
-func main() {
-	// Set the local variables.
-	configFile := "config/config.json"
-
-	// Get the config json into the Configuration struct.
-	configuration := SetConfiguration(configFile)
-
+// outputMarkdown sends the repository list to the markdown file.
+func outputMarkdown(repositories []Repository) {
 	// Create the output file.
 	outputFile, err := os.Create("README.md")
 	check(err)
@@ -158,8 +153,29 @@ func main() {
 	fmt.Fprintln(outputFile, "--------------- | ------- | --------- | ------- | --------- | --------- | -------")
 	outputFile.Sync()
 
+	// Closures to order the Repository structure.
+	size := func(r1, r2 *Repository) bool {
+		return r2.Size < r1.Size
+	}
+
+	// Sort the repositories by Size.
+	By(size).Sort(repositories)
+
+	for i := range repositories {
+		fmt.Fprintf(outputFile, "%s | %t | %d | %d | %d | %d | %d\n", string(repositories[i].Name), bool(repositories[i].Private), int(repositories[i].Size), int(repositories[i].TotalCommits), int(repositories[i].TotalAdditions), int(repositories[i].TotalDeletions), int(repositories[i].NumberAuthors))
+	}
+	outputFile.Sync()
+}
+
+func main() {
+	// Set the local variables.
+	configFile := "config/config.json"
+
+	// Get the config json into the Configuration struct.
+	configuration := setConfiguration(configFile)
+
 	// Get the json response.
-	repoList := GetJsonResponse(configuration.URIRepos, configuration.Token, "repos")
+	repoList := getJsonResponse(configuration.URIRepos, configuration.Token, "repos")
 
 	// Declare a slice of all the repos.
 	repositories := make([]Repository, len(repoList))
@@ -173,7 +189,7 @@ func main() {
 
 		// For each repo, get the contributor statistics.
 		URIStatsItem := strings.Replace(configuration.URIStats, ":repo", repoName, 1)
-		statsList := GetJsonResponse(URIStatsItem, configuration.Token, "stats")
+		statsList := getJsonResponse(URIStatsItem, configuration.Token, "stats")
 
 		// Declare a slice of all the stats
 		statistics := make([]Statistic, len(statsList))
@@ -231,18 +247,6 @@ func main() {
 		//outputFile.Sync()
 	}
 
-	// Closures to order the Repository structure.
-	size := func(r1, r2 *Repository) bool {
-		return r2.Size < r1.Size
-	}
-
-	// Sort the repositories by Size.
-	By(size).Sort(repositories)
-
 	// Output the repositories in size order.
-	for i := range repositories {
-		fmt.Fprintf(outputFile, "%s | %t | %d | %d | %d | %d | %d\n", string(repositories[i].Name), bool(repositories[i].Private), int(repositories[i].Size), int(repositories[i].TotalCommits), int(repositories[i].TotalAdditions), int(repositories[i].TotalDeletions), int(repositories[i].NumberAuthors))
-	}
-	outputFile.Sync()
-
+	outputMarkdown(repositories)
 }
