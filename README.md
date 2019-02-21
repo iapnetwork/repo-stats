@@ -6,20 +6,20 @@ The data below is the output of the `repo-stats.go` package.
 
 Repository Name | Private | Size (kb) | Commits | Additions | Deletions | Authors
 --------------- | ------- | --------- | ------- | --------- | --------- | -------
-eth-docker | true | 7 | 1 | 263 | 0 | 1
-iap-client-contracts | true | 14 | 1 | 674 | 0 | 1
-iap-client-py | true | 41 | 27 | 1246 | 118 | 2
-iap-client-go | true | 14 | 1 | 687 | 0 | 1
-blockliance-ui | true | 478 | 64 | 12019 | 1294 | 3
-blockliance-api | true | 3685 | 12 | 11575 | 1296 | 2
-iap-client-solidity | true | 232 | 20 | 12409 | 176 | 2
-iap-client-base | true | 2606 | 211 | 24302 | 2231 | 4
-iap-core-py | true | 89 | 16 | 4277 | 122 | 1
-cloud-builders | true | 0 | 2 | 21 | 0 | 1
 iapclient-hyperledger | true | 6832 | 43 | 818496 | 487454 | 1
-evidence-chain-solidity | true | 9 | 7 | 558 | 76 | 1
 evidencechain-hyperledger | true | 4893 | 12 | 607 | 283 | 1
-merkletree | false | 35 | 22 | 1492 | 96 | 1
+blockliance-api | true | 3685 | 12 | 11575 | 1296 | 2
 docs-pre | true | 3165 | 180 | 9465 | 4466 | 7
+iap-client-base | true | 2606 | 211 | 24302 | 2231 | 4
 docs | false | 766 | 4 | 2114 | 4 | 1
+blockliance-ui | true | 478 | 64 | 12019 | 1294 | 3
+iap-client-solidity | true | 232 | 20 | 12409 | 176 | 2
+iap-core-py | true | 89 | 16 | 4277 | 122 | 1
+iap-client-py | true | 41 | 27 | 1246 | 118 | 2
+merkletree | false | 35 | 22 | 1492 | 96 | 1
+iap-client-contracts | true | 14 | 1 | 674 | 0 | 1
+iap-client-go | true | 14 | 1 | 687 | 0 | 1
+evidence-chain-solidity | true | 9 | 7 | 558 | 76 | 1
+eth-docker | true | 7 | 1 | 263 | 0 | 1
 repo-stats | true | 3 | 2 | 225 | 2 | 1
+cloud-builders | true | 0 | 2 | 21 | 0 | 1
