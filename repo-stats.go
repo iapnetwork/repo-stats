@@ -11,7 +11,9 @@ import (
 )
 
 type Configuration struct {
-	Token string `json:"token"`
+	Token    string `json:"token"`
+	UriRepos string `json:"uri_repos"`
+	UriStats string `json:"uri_stats"`
 }
 
 type Repository struct {
@@ -94,9 +96,7 @@ func GetJsonResponse(uri string, token string, fixer string) []interface{} {
 
 func main() {
 	// Set the local variables.
-	configFile := "config/config.development.json"
-	uriRepo := "https://api.github.com/orgs/iapnetwork/repos"
-	uriStats := "https://api.github.com/repos/iapnetwork/:repo/stats/contributors"
+	configFile := "config/config.json"
 
 	// Get the config json into the Configuration struct.
 	configuration := SetConfiguration(configFile)
@@ -108,15 +108,15 @@ func main() {
 
 	// Add the headers.
 	fmt.Fprint(outputFile, "# IAP Repository Stats\n\n")
-	fmt.Fprint(outputFile, "The data below is the output of the `github-stats.go` package.\n\n")
+	fmt.Fprint(outputFile, "The data below is the output of the `repo-stats.go` package.\n\n")
 	fmt.Fprint(outputFile, "## All Repositories\n\n")
 
-	fmt.Fprintln(outputFile, "Repository | Private | Size | Commits | Additions | Deletions | Authors")
-	fmt.Fprintln(outputFile, "---------- | ------- | ---- | ------- | --------- | --------- | -------")
+	fmt.Fprintln(outputFile, "Repository Name | Private | Size (kb) | Commits | Additions | Deletions | Authors")
+	fmt.Fprintln(outputFile, "--------------- | ------- | --------- | ------- | --------- | --------- | -------")
 	outputFile.Sync()
 
 	// Get the json response.
-	repoList := GetJsonResponse(uriRepo, configuration.Token, "repos")
+	repoList := GetJsonResponse(configuration.UriRepos, configuration.Token, "repos")
 
 	// Declare a slice of all the repos.
 	repositories := make([]*Repository, len(repoList))
@@ -134,7 +134,7 @@ func main() {
 		size := repoList[i].(map[string]interface{})["size"].(float64)
 
 		// For each repo, get the contributor statistics.
-		uriStatsItem := strings.Replace(uriStats, ":repo", repoName, 1)
+		uriStatsItem := strings.Replace(configuration.UriStats, ":repo", repoName, 1)
 		statsList := GetJsonResponse(uriStatsItem, configuration.Token, "stats")
 
 		// Declare a slice of all the stats
@@ -191,4 +191,5 @@ func main() {
 		fmt.Fprintf(outputFile, "%s | %t | %d | %d | %d | %d | %d\n", string(repoName), bool(private), int(size), int(totalCommits), int(totalAdditions), int(totalDeletions), int(numberAuthors))
 		outputFile.Sync()
 	}
+
 }

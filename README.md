@@ -1,11 +1,11 @@
 # IAP Repository Stats
 
-The data below is the output of the `github-stats.go` package.
+The data below is the output of the `repo-stats.go` package.
 
 ## All Repositories
 
-Repository | Private | Size | Commits | Additions | Deletions | Authors
----------- | ------- | ---- | ------- | --------- | --------- | -------
+Repository Name | Private | Size (kb) | Commits | Additions | Deletions | Authors
+--------------- | ------- | --------- | ------- | --------- | --------- | -------
 eth-docker | true | 7 | 1 | 263 | 0 | 1
 iap-client-contracts | true | 14 | 1 | 674 | 0 | 1
 iap-client-py | true | 41 | 27 | 1246 | 118 | 2
@@ -20,6 +20,6 @@ iapclient-hyperledger | true | 6832 | 43 | 818496 | 487454 | 1
 evidence-chain-solidity | true | 9 | 7 | 558 | 76 | 1
 evidencechain-hyperledger | true | 4893 | 12 | 607 | 283 | 1
 merkletree | false | 35 | 22 | 1492 | 96 | 1
-docs-pre | true | 3011 | 178 | 9462 | 4463 | 7
-docs | false | 710 | 4 | 2114 | 4 | 1
-repo-stats | true | 0 | 1 | 2 | 0 | 1
+docs-pre | true | 3165 | 180 | 9465 | 4466 | 7
+docs | false | 766 | 4 | 2114 | 4 | 1
+repo-stats | true | 3 | 2 | 225 | 2 | 1
