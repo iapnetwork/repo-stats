@@ -1,22 +1,9 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
-	"io/ioutil"
-	"net/http"
-	"os"
-	"sort"
 	"strings"
 	"time"
 )
-
-// Configuration contains the config properties.
-type Configuration struct {
-	Token    string `json:"token"`
-	URIRepos string `json:"uri_repos"`
-	URIStats string `json:"uri_stats"`
-}
 
 // Repository contains the properties for the git repository.
 type Repository struct {
@@ -51,128 +38,9 @@ func check(e error) {
 	}
 }
 
-// Sorting!
-
-// By is a less function to define the ordering of the Repository arguments.
-type By func(r1, r2 *Repository) bool
-
-// Join the By function and the slice to be sorted.
-type repoSorter struct {
-	repositories []Repository
-	by           func(r1, r2 *Repository) bool // Closure.
-}
-
-// Sort is a function for sorting the argument slice.
-func (by By) Sort(repositories []Repository) {
-	rs := &repoSorter{
-		repositories: repositories,
-		by:           by,
-	}
-	sort.Sort(rs)
-}
-
-// Len is part of sort.Interface.
-func (s *repoSorter) Len() int {
-	return len(s.repositories)
-}
-
-// Swap is part of sort.Interface.
-func (s *repoSorter) Swap(i, j int) {
-	s.repositories[i], s.repositories[j] = s.repositories[j], s.repositories[i]
-}
-
-// Less is part of sort.Interface. It is implemented by calling the By closure.
-func (s *repoSorter) Less(i, j int) bool {
-	return s.by(&s.repositories[i], &s.repositories[j])
-}
-
-// setConfiguration adds all of the json config settings into the struct.
-func setConfiguration(file string) Configuration {
-	// Get the config json into the Configuration struct.
-	var configuration Configuration
-	configJson, err := os.Open(file)
-	check(err)
-	defer configJson.Close()
-	byteValue, _ := ioutil.ReadAll(configJson)
-	json.Unmarshal(byteValue, &configuration)
-	return configuration
-}
-
-// setRequest creates and sends the request.
-func setRequest(uri string, token string) []byte {
-	// Set up the request.
-	client := &http.Client{}
-	request, err := http.NewRequest("GET", uri, nil)
-	check(err)
-	request.Header.Set("Authorization", token)
-
-	// Get the repos json data.
-	response, _ := client.Do(request)
-	jsonData, _ := ioutil.ReadAll(response.Body)
-
-	return jsonData
-}
-
-// getJsonResponse gets the full json object returned from the Request.
-func getJsonResponse(uri string, token string, fixer string) []interface{} {
-	// Set up the request.
-	jsonData := setRequest(uri, token)
-	jsonText := string(jsonData)
-
-	// Github returns empty stats data for the first uncached request, so try again.
-	if jsonText == "{}" {
-		jsonData = setRequest(uri, token)
-		jsonText = string(jsonData)
-	}
-
-	// Fix the bad json from GitHub.
-	jsonText = `{ "` + fixer + `": ` + jsonText + ` }`
-
-	// Unmarshal the json.
-	var jsonDataFixed map[string]interface{}
-	json.Unmarshal([]byte(jsonText), &jsonDataFixed)
-
-	// Use type assertion to get the repo list into the correct type.
-	dataList := jsonDataFixed[fixer].([]interface{})
-	return dataList
-}
-
-// outputMarkdown sends the repository list to the markdown file.
-func outputMarkdown(repositories []Repository) {
-	// Create the output file.
-	outputFile, err := os.Create("README.md")
-	check(err)
-	defer outputFile.Close()
-
-	// Add the headers.
-	fmt.Fprint(outputFile, "# IAP Repository Stats\n\n")
-	fmt.Fprint(outputFile, "The data below is the output of the `repo-stats.go` package.\n\n")
-	fmt.Fprint(outputFile, "## All Repositories\n\n")
-
-	fmt.Fprintln(outputFile, "Repository Name | Visibility | Size (kb) | Commits | Additions | Deletions | Authors")
-	fmt.Fprintln(outputFile, "--------------- | ---------- | --------- | ------- | --------- | --------- | -------")
-	outputFile.Sync()
-
-	// Closures to order the Repository structure.
-	size := func(r1, r2 *Repository) bool {
-		return r2.Size < r1.Size
-	}
-
-	// Sort the repositories by Size.
-	By(size).Sort(repositories)
-
-	for i := range repositories {
-		fmt.Fprintf(outputFile, "%s | %s | %d | %d | %d | %d | %d\n", repositories[i].Name, repositories[i].Visibility, repositories[i].Size, repositories[i].TotalCommits, repositories[i].TotalAdditions, repositories[i].TotalDeletions, repositories[i].NumberAuthors)
-	}
-	outputFile.Sync()
-}
-
 func main() {
-	// Set the local variables.
-	configFile := "config/config.json"
-
 	// Get the config json into the Configuration struct.
-	configuration := setConfiguration(configFile)
+	configuration := setConfiguration()
 
 	// Get the json response.
 	repoList := getJsonResponse(configuration.URIRepos, configuration.Token, "repos")
