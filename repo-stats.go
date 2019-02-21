@@ -119,7 +119,7 @@ func getJsonResponse(uri string, token string, fixer string) []interface{} {
 	jsonData := setRequest(uri, token)
 	jsonText := string(jsonData)
 
-	// Github sometimes returns empty stats data for the repo, so try again.
+	// Github returns empty stats data for the first uncached request, so try again.
 	if jsonText == "{}" {
 		jsonData = setRequest(uri, token)
 		jsonText = string(jsonData)
