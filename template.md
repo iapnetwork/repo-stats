@@ -1,6 +1,8 @@
 # IAP Repository Stats
 
-The data below is the output of the `repo-stats.go` package.
+This package gets repository statistics information from GitHub, excluding any forked repositories. It is dependant on a GitHub personal access token, which is excluded from this git repository.
+
+The data below is the output of executing this package on the IAP GitHub repositories.
 
 ## All Repositories
 
