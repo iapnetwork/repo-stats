@@ -69,7 +69,10 @@ func outputMarkdown(repositories []Repository) {
 	By(size).Sort(repositories)
 
 	for i := range repositories {
-		fmt.Fprintf(outputFile, "%s | %s | %d | %d | %d | %d | %d\n", repositories[i].Name, repositories[i].Visibility, repositories[i].Size, repositories[i].TotalCommits, repositories[i].TotalAdditions, repositories[i].TotalDeletions, repositories[i].NumberAuthors)
+		// Any forked repos that weren't added would have empty allocation slots at the end of the slice, so ignore these in the output.
+		if repositories[i].Name != "" {
+			fmt.Fprintf(outputFile, "%s | %s | %d | %d | %d | %d | %d\n", repositories[i].Name, repositories[i].Visibility, repositories[i].Size, repositories[i].TotalCommits, repositories[i].TotalAdditions, repositories[i].TotalDeletions, repositories[i].NumberAuthors)
+		}
 	}
 	outputFile.Sync()
 }

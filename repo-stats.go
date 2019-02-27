@@ -50,6 +50,11 @@ func main() {
 
 	// Loop through the slice, building the Repository struct.
 	for i := range repoList {
+		// Only get stats for non-forked repos.
+		if repoList[i].(map[string]interface{})["fork"].(bool) {
+			continue
+		}
+
 		repoName := repoList[i].(map[string]interface{})["name"].(string)
 		private := repoList[i].(map[string]interface{})["private"].(bool)
 
