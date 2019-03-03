@@ -86,7 +86,7 @@ func outputMarkdown(repositories []Repository) {
 	// Sort the repositories by Size.
 	By(size).Sort(repositories)
 
-	// Print out each row to the README.md
+	// Print out all of the rows to the README.md
 	printRow(repositories, outputFile)
 	outputFile.Sync()
 }
