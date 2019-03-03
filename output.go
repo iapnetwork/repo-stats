@@ -49,6 +49,24 @@ func getMarkdownTemplate() string {
 	return string(data)
 }
 
+// printRow outputs the contents of each repository statistics to the README.
+func printRow(r []Repository, f *os.File) {
+	for i := range r {
+		// Any forked repos that weren't added would have empty allocation slots at the end of the slice, so ignore these in the output.
+		if r[i].Name != "" {
+			fmt.Fprintf(f,
+				"%s | %s | %d | %d | %d | %d | %d\n",
+				r[i].Name,
+				r[i].Visibility,
+				r[i].Size,
+				r[i].TotalCommits,
+				r[i].TotalAdditions,
+				r[i].TotalDeletions,
+				r[i].NumberAuthors)
+		}
+	}
+}
+
 // outputMarkdown sends the repository list to the markdown file.
 func outputMarkdown(repositories []Repository) {
 	// Create the output file.
@@ -68,11 +86,7 @@ func outputMarkdown(repositories []Repository) {
 	// Sort the repositories by Size.
 	By(size).Sort(repositories)
 
-	for i := range repositories {
-		// Any forked repos that weren't added would have empty allocation slots at the end of the slice, so ignore these in the output.
-		if repositories[i].Name != "" {
-			fmt.Fprintf(outputFile, "%s | %s | %d | %d | %d | %d | %d\n", repositories[i].Name, repositories[i].Visibility, repositories[i].Size, repositories[i].TotalCommits, repositories[i].TotalAdditions, repositories[i].TotalDeletions, repositories[i].NumberAuthors)
-		}
-	}
+	// Print out each row to the README.md
+	printRow(repositories, outputFile)
 	outputFile.Sync()
 }
