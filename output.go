@@ -55,7 +55,7 @@ func printRow(r []Repository, f *os.File) {
 		// Any forked repos that weren't added would have empty allocation slots at the end of the slice, so ignore these in the output.
 		if r[i].Name != "" {
 			fmt.Fprintf(f,
-				"%s | %s | %d | %d | %d | %d | %d\n",
+				"| %s | %s | %d | %d | %d | %d | %d |\n",
 				r[i].Name,
 				r[i].Visibility,
 				r[i].Size,
