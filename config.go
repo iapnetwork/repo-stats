@@ -23,7 +23,7 @@ func setConfiguration() Configuration {
 	configuration.URIStats = configData["uri_stats"].(string)
 
 	secretData := getConfigData("secret.json")
-	configuration.Token = secretData["token"].(string)
+	configuration.Token = "Bearer " + secretData["token"].(string)
 	return configuration
 }
 
