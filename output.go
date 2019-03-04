@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"sort"
+	"strings"
 )
 
 // By is a less function to define the ordering of the Repository arguments.
@@ -50,11 +51,12 @@ func getMarkdownTemplate() string {
 }
 
 // printRow outputs the contents of each repository statistics to the README.
-func printRow(r []Repository, f *os.File) {
+func outputTable(r []Repository) string {
+	var table string
 	for i := range r {
 		// Any forked repos that weren't added would have empty allocation slots at the end of the slice, so ignore these in the output.
 		if r[i].Name != "" {
-			fmt.Fprintf(f,
+			table += fmt.Sprintf(
 				"| %s | %s | %d | %d | %d | %d | %d |\n",
 				r[i].Name,
 				r[i].Visibility,
@@ -65,18 +67,18 @@ func printRow(r []Repository, f *os.File) {
 				r[i].TotalStats.Authors)
 		}
 	}
+	return table
 }
 
 // outputMarkdown sends the repository list to the markdown file.
 func outputMarkdown(repositories []Repository) {
 	// Create the output file.
-	outputFile, err := os.Create("README.md")
+	readme, err := os.Create("README.md")
 	check(err)
-	defer outputFile.Close()
+	defer readme.Close()
 
 	// Add the headers.
-	fmt.Fprint(outputFile, getMarkdownTemplate())
-	outputFile.Sync()
+	template := fmt.Sprint(getMarkdownTemplate())
 
 	// Closures to order the Repository structure.
 	size := func(r1, r2 *Repository) bool {
@@ -87,6 +89,8 @@ func outputMarkdown(repositories []Repository) {
 	By(size).Sort(repositories)
 
 	// Print out all of the rows to the README.md
-	printRow(repositories, outputFile)
-	outputFile.Sync()
+	output := strings.Replace(template, "{{ table }}", outputTable(repositories), 1)
+	_, err = fmt.Fprint(readme, output)
+	check(err)
+	readme.Sync()
 }

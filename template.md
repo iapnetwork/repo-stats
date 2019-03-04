@@ -8,3 +8,4 @@ The data below is the output of executing this package on the IAP Network GitHub
 
 | Repository Name | Visibility | Size (kb) | Commits | Additions | Deletions | Authors |
 | --------------- | ---------- | --------- | ------- | --------- | --------- | ------- |
+{{ table }}
