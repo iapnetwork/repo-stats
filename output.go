@@ -92,5 +92,5 @@ func outputMarkdown(repositories []Repository) {
 	output := strings.Replace(template, "{{ table }}", outputTable(repositories), 1)
 	_, err = fmt.Fprint(readme, output)
 	check(err)
-	readme.Sync()
+	check(readme.Sync())
 }
