@@ -59,10 +59,10 @@ func printRow(r []Repository, f *os.File) {
 				r[i].Name,
 				r[i].Visibility,
 				r[i].Size,
-				r[i].TotalCommits,
-				r[i].TotalAdditions,
-				r[i].TotalDeletions,
-				r[i].NumberAuthors)
+				r[i].TotalStats.Commits,
+				r[i].TotalStats.Additions,
+				r[i].TotalStats.Deletions,
+				r[i].TotalStats.Authors)
 		}
 	}
 }
