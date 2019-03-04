@@ -83,6 +83,10 @@ func checkVisibility(private bool) string {
 	return "public"
 }
 
+func repoStatsURI(uri string, repoName string) string {
+	return strings.Replace(uri, ":repo", repoName, 1)
+}
+
 // Error check.
 func check(e error) {
 	if e != nil {
@@ -107,11 +111,9 @@ func main() {
 			continue
 		}
 
-		repoName := repoList[i].(map[string]interface{})["name"].(string)
-
 		// For each repo, get the contributor statistics.
-		URIStatsItem := strings.Replace(configuration.URIStats, ":repo", repoName, 1)
-		statsList := getJsonResponse(URIStatsItem, configuration.Token, "stats")
+		uri := repoStatsURI(configuration.URIStats, repoList[i].(map[string]interface{})["name"].(string))
+		statsList := getJsonResponse(uri, configuration.Token, "stats")
 
 		// Declare a slice of all the stats
 		statistics := make([]Statistic, len(statsList))

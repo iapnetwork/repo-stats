@@ -38,7 +38,8 @@ func getJsonResponse(uri string, token string, fixer string) []interface{} {
 
 	// Unmarshal the json.
 	var jsonDataFixed map[string]interface{}
-	json.Unmarshal([]byte(jsonText), &jsonDataFixed)
+	err := json.Unmarshal([]byte(jsonText), &jsonDataFixed)
+	check(err)
 
 	// Use type assertion to get the repo list into the correct type.
 	dataList := jsonDataFixed[fixer].([]interface{})

@@ -31,7 +31,8 @@ func getConfigData(fileName string) map[string]interface{} {
 	// Get the config json into the Configuration struct.
 	jsonData := getConfiguration(fileName)
 	var configData map[string]interface{}
-	json.Unmarshal(jsonData, &configData)
+	err := json.Unmarshal(jsonData, &configData)
+	check(err)
 	return configData
 }
 
