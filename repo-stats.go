@@ -7,14 +7,11 @@ import (
 
 // Repository contains the properties for the git repository.
 type Repository struct {
-	Name           string
-	Visibility     string
-	Size           int
-	Statistics     []Statistic
-	TotalCommits   int64
-	TotalAdditions int64
-	TotalDeletions int64
-	NumberAuthors  int
+	Name       string
+	Visibility string
+	Size       int
+	Statistics []Statistic
+	TotalStats Totals
 }
 
 // Statistic contains the properties for the total repository statistics.
@@ -32,6 +29,65 @@ type Week struct {
 	Commits    int64
 }
 
+// Totals contains the total counters for the repository statistics.
+type Totals struct {
+	Commits   int64
+	Additions int64
+	Deletions int64
+	Authors   int
+}
+
+// Adds values to the Repository slice.
+func (r *Repository) addRepo(repo map[string]interface{}, statistics []Statistic, totals Totals) {
+	r.Name = repo["name"].(string)
+	r.Visibility = checkVisibility(repo["private"].(bool))
+	r.Size = int(repo["size"].(float64))
+	r.Statistics = statistics
+	r.TotalStats = totals
+}
+
+// Add the values to the Statistic slice.
+func (s *Statistic) addStats(statsItem map[string]interface{}, weeks []Week) {
+	s.Total = int64(statsItem["total"].(float64))
+	s.Weeks = weeks
+	author := statsItem["author"].(map[string]interface{})
+	s.Author = author["login"].(string)
+}
+
+// Add the values to the Week slice.
+func (w *Week) addWeek(weekItem map[string]interface{}) {
+	weekNumberUnix := weekItem["w"].(float64)
+	w.WeekNumber = time.Unix(int64(weekNumberUnix), 0).Format(time.RFC3339)
+	w.Additions = int64(weekItem["a"].(float64))
+	w.Deletions = int64(weekItem["d"].(float64))
+	w.Commits = int64(weekItem["c"].(float64))
+}
+
+// Increase the Repository totals.
+func (t *Totals) increaseActivity(weekItem map[string]interface{}) {
+	t.Additions += int64(weekItem["a"].(float64))
+	t.Deletions += int64(weekItem["d"].(float64))
+	t.Commits += int64(weekItem["c"].(float64))
+}
+
+// Increment the Repository total authors.
+func (t *Totals) incrementAuthors() {
+	t.Authors++
+}
+
+// Visibility is listed in the markdown as either Public or Private.
+func checkVisibility(private bool) string {
+	if private {
+		return "private"
+	}
+	return "public"
+}
+
+func repoStatsURI(uri string, repoName string) string {
+	return strings.Replace(uri, ":repo", repoName, 1)
+}
+
+// Error check.
 func check(e error) {
 	if e != nil {
 		panic(e)
@@ -55,37 +111,20 @@ func main() {
 			continue
 		}
 
-		repoName := repoList[i].(map[string]interface{})["name"].(string)
-		private := repoList[i].(map[string]interface{})["private"].(bool)
-
-		// Visibility is listed in the markdown as either Public or Private.
-		visibility := "public"
-		if private {
-			visibility = "private"
-		}
-
-		size := int(repoList[i].(map[string]interface{})["size"].(float64))
-
 		// For each repo, get the contributor statistics.
-		URIStatsItem := strings.Replace(configuration.URIStats, ":repo", repoName, 1)
-		statsList := getJsonResponse(URIStatsItem, configuration.Token, "stats")
+		uri := repoStatsURI(configuration.URIStats, repoList[i].(map[string]interface{})["name"].(string))
+		statsList := getJsonResponse(uri, configuration.Token, "stats")
 
 		// Declare a slice of all the stats
 		statistics := make([]Statistic, len(statsList))
 
 		// Declare the totals counters.
-		var totalCommits int64
-		var totalAdditions int64
-		var totalDeletions int64
-		var numberAuthors int
+		var totals Totals
 
 		// Loop through the slice, building the Statistics struct.
 		for j := range statsList {
 			// Type assert the complete stats json object.
 			statsItem := statsList[j].(map[string]interface{})
-
-			// Set the total value
-			total := int64(statsItem["total"].(float64))
 
 			// Get the "weeks" json object.
 			weeksList := statsItem["weeks"].([]interface{})
@@ -95,34 +134,22 @@ func main() {
 
 			// Loop through the weeks json.
 			for k := range weeksList {
-				// Set the week items data.
-				weekItem := weeksList[k].(map[string]interface{})
-				weekNumberUnix := weekItem["w"].(float64)
-				weekNumber := time.Unix(int64(weekNumberUnix), 0).Format(time.RFC3339)
-				additions := int64(weekItem["a"].(float64))
-				deletions := int64(weekItem["d"].(float64))
-				commits := int64(weekItem["c"].(float64))
-
-				totalAdditions += additions
-				totalDeletions += deletions
-				totalCommits += commits
-
 				// Add the values to the Week slice.
-				weeks[k] = Week{weekNumber, additions, deletions, commits}
+				weeks[k].addWeek(weeksList[k].(map[string]interface{}))
+
+				// Add the weekly totals to the repository Totals struct.
+				totals.increaseActivity(weeksList[k].(map[string]interface{}))
 			}
 
-			author := statsItem["author"].(map[string]interface{})
-			contributor := author["login"].(string)
-
 			// The json response is sectioned by authors - increment the counter.
-			numberAuthors++
+			totals.incrementAuthors()
 
 			// Add the values to the Statistic slice.
-			statistics[j] = Statistic{total, weeks, contributor}
+			statistics[j].addStats(statsItem, weeks)
 		}
 
-		// Add the values to the Repository struct.
-		repositories[i] = Repository{repoName, visibility, size, statistics, totalCommits, totalAdditions, totalDeletions, numberAuthors}
+		// Add the values to the Repository slice.
+		repositories[i].addRepo(repoList[i].(map[string]interface{}), statistics, totals)
 	}
 
 	// Output the repositories in size order.

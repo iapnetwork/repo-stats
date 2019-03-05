@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"sort"
+	"strings"
 )
 
 // By is a less function to define the ordering of the Repository arguments.
@@ -49,16 +50,35 @@ func getMarkdownTemplate() string {
 	return string(data)
 }
 
+// printRow outputs the contents of each repository statistics to the README.
+func outputTable(r []Repository) string {
+	var table string
+	for i := range r {
+		// Any forked repos that weren't added would have empty allocation slots at the end of the slice, so ignore these in the output.
+		if r[i].Name != "" {
+			table += fmt.Sprintf(
+				"| %s | %s | %d | %d | %d | %d | %d |\n",
+				r[i].Name,
+				r[i].Visibility,
+				r[i].Size,
+				r[i].TotalStats.Commits,
+				r[i].TotalStats.Additions,
+				r[i].TotalStats.Deletions,
+				r[i].TotalStats.Authors)
+		}
+	}
+	return table
+}
+
 // outputMarkdown sends the repository list to the markdown file.
 func outputMarkdown(repositories []Repository) {
 	// Create the output file.
-	outputFile, err := os.Create("README.md")
+	readme, err := os.Create("README.md")
 	check(err)
-	defer outputFile.Close()
+	defer readme.Close()
 
 	// Add the headers.
-	fmt.Fprint(outputFile, getMarkdownTemplate())
-	outputFile.Sync()
+	template := fmt.Sprint(getMarkdownTemplate())
 
 	// Closures to order the Repository structure.
 	size := func(r1, r2 *Repository) bool {
@@ -68,11 +88,9 @@ func outputMarkdown(repositories []Repository) {
 	// Sort the repositories by Size.
 	By(size).Sort(repositories)
 
-	for i := range repositories {
-		// Any forked repos that weren't added would have empty allocation slots at the end of the slice, so ignore these in the output.
-		if repositories[i].Name != "" {
-			fmt.Fprintf(outputFile, "%s | %s | %d | %d | %d | %d | %d\n", repositories[i].Name, repositories[i].Visibility, repositories[i].Size, repositories[i].TotalCommits, repositories[i].TotalAdditions, repositories[i].TotalDeletions, repositories[i].NumberAuthors)
-		}
-	}
-	outputFile.Sync()
+	// Print out all of the rows to the README.md
+	output := strings.Replace(template, "{{ table }}", outputTable(repositories), 1)
+	_, err = fmt.Fprint(readme, output)
+	check(err)
+	check(readme.Sync())
 }

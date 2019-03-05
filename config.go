@@ -23,7 +23,7 @@ func setConfiguration() Configuration {
 	configuration.URIStats = configData["uri_stats"].(string)
 
 	secretData := getConfigData("secret.json")
-	configuration.Token = secretData["token"].(string)
+	configuration.Token = "Bearer " + secretData["token"].(string)
 	return configuration
 }
 
@@ -31,7 +31,7 @@ func getConfigData(fileName string) map[string]interface{} {
 	// Get the config json into the Configuration struct.
 	jsonData := getConfiguration(fileName)
 	var configData map[string]interface{}
-	json.Unmarshal(jsonData, &configData)
+	check(json.Unmarshal(jsonData, &configData))
 	return configData
 }
 
