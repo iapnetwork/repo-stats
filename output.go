@@ -53,6 +53,9 @@ func getMarkdownTemplate() string {
 // printRow outputs the contents of each repository statistics to the README.
 func outputTable(r []Repository) string {
 	var table string
+	var repos, size, authors int
+	var commits, additions, deletions int64
+
 	for i := range r {
 		// Any forked repos that weren't added would have empty allocation slots at the end of the slice, so ignore these in the output.
 		if r[i].Name != "" {
@@ -65,8 +68,30 @@ func outputTable(r []Repository) string {
 				r[i].TotalStats.Additions,
 				r[i].TotalStats.Deletions,
 				r[i].TotalStats.Authors)
+
+			// Calculate totals.
+			repos += 1
+			size += r[i].Size
+			commits += r[i].TotalStats.Commits
+			additions += r[i].TotalStats.Additions
+			deletions += r[i].TotalStats.Deletions
+			if authors < r[i].TotalStats.Authors {
+				authors = r[i].TotalStats.Authors
+			}
 		}
 	}
+
+	// Add totals to the end of the table.
+	table += fmt.Sprint("| | | | | | | |\n")
+	table += fmt.Sprintf(
+		"| **Totals** | **%d** | **%d** | **%d** | **%d** | **%d** | **%d** |\n",
+		repos,
+		size,
+		commits,
+		additions,
+		deletions,
+		authors)
+
 	return table
 }
 
