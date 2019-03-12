@@ -105,14 +105,14 @@ func main() {
 	repositories := make([]Repository, len(repoList))
 
 	// Loop through the slice, building the Repository struct.
-	for i := range repoList {
+	for i, repoItem := range repoList {
 		// Only get stats for non-forked repos.
-		if repoList[i].(map[string]interface{})["fork"].(bool) {
+		if repoItem.(map[string]interface{})["fork"].(bool) {
 			continue
 		}
 
 		// For each repo, get the contributor statistics.
-		uri := repoStatsURI(configuration.URIStats, repoList[i].(map[string]interface{})["name"].(string))
+		uri := repoStatsURI(configuration.URIStats, repoItem.(map[string]interface{})["name"].(string))
 		statsList := getJsonResponse(uri, configuration.Token, "stats")
 
 		// Declare a slice of all the stats
@@ -122,34 +122,31 @@ func main() {
 		var totals Totals
 
 		// Loop through the slice, building the Statistics struct.
-		for j := range statsList {
-			// Type assert the complete stats json object.
-			statsItem := statsList[j].(map[string]interface{})
-
+		for j, statsItem := range statsList {
 			// Get the "weeks" json object.
-			weeksList := statsItem["weeks"].([]interface{})
+			weeksList := statsItem.(map[string]interface{})["weeks"].([]interface{})
 
 			// Create a slice for the weeks data.
 			weeks := make([]Week, len(weeksList))
 
 			// Loop through the weeks json.
-			for k := range weeksList {
+			for k, weekItem := range weeksList {
 				// Add the values to the Week slice.
-				weeks[k].addWeek(weeksList[k].(map[string]interface{}))
+				weeks[k].addWeek(weekItem.(map[string]interface{}))
 
 				// Add the weekly totals to the repository Totals struct.
-				totals.increaseActivity(weeksList[k].(map[string]interface{}))
+				totals.increaseActivity(weekItem.(map[string]interface{}))
 			}
 
 			// The json response is sectioned by authors - increment the counter.
 			totals.incrementAuthors()
 
 			// Add the values to the Statistic slice.
-			statistics[j].addStats(statsItem, weeks)
+			statistics[j].addStats(statsItem.(map[string]interface{}), weeks)
 		}
 
 		// Add the values to the Repository slice.
-		repositories[i].addRepo(repoList[i].(map[string]interface{}), statistics, totals)
+		repositories[i].addRepo(repoItem.(map[string]interface{}), statistics, totals)
 	}
 
 	// Output the repositories in size order.

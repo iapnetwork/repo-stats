@@ -56,27 +56,27 @@ func outputTable(r []Repository) string {
 	var repos, size, authors int
 	var commits, additions, deletions int64
 
-	for i := range r {
+	for _, item := range r {
 		// Any forked repos that weren't added would have empty allocation slots at the end of the slice, so ignore these in the output.
-		if r[i].Name != "" {
+		if item.Name != "" {
 			table += fmt.Sprintf(
 				"| %s | %s | %d | %d | %d | %d | %d |\n",
-				r[i].Name,
-				r[i].Visibility,
-				r[i].Size,
-				r[i].TotalStats.Commits,
-				r[i].TotalStats.Additions,
-				r[i].TotalStats.Deletions,
-				r[i].TotalStats.Authors)
+				item.Name,
+				item.Visibility,
+				item.Size,
+				item.TotalStats.Commits,
+				item.TotalStats.Additions,
+				item.TotalStats.Deletions,
+				item.TotalStats.Authors)
 
 			// Calculate totals.
 			repos += 1
-			size += r[i].Size
-			commits += r[i].TotalStats.Commits
-			additions += r[i].TotalStats.Additions
-			deletions += r[i].TotalStats.Deletions
-			if authors < r[i].TotalStats.Authors {
-				authors = r[i].TotalStats.Authors
+			size += item.Size
+			commits += item.TotalStats.Commits
+			additions += item.TotalStats.Additions
+			deletions += item.TotalStats.Deletions
+			if authors < item.TotalStats.Authors {
+				authors = item.TotalStats.Authors
 			}
 		}
 	}
