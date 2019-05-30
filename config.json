@@ -1,4 +1,5 @@
 {
     "uri_repos": "https://api.github.com/orgs/iapnetwork/repos",
+    "uri_commits": "https://api.github.com/repos/iapnetwork/:repo/commits",
     "uri_stats": "https://api.github.com/repos/iapnetwork/:repo/stats/contributors"
 }
