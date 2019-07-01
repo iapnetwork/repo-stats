@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"strings"
 	"time"
 )
@@ -111,8 +112,12 @@ func main() {
 			continue
 		}
 
+		// Print repo name to screen.
+		fmt.Printf("Repo %s", repoItem.(map[string]interface{})["name"].(string))
+
 		// For each repo, get the contributor statistics.
 		uri := repoStatsURI(configuration.URIStats, repoItem.(map[string]interface{})["name"].(string))
+
 		statsList := getJsonResponse(uri, configuration.Token, "stats")
 
 		// Declare a slice of all the stats
@@ -123,6 +128,9 @@ func main() {
 
 		// Loop through the slice, building the Statistics struct.
 		for j, statsItem := range statsList {
+			// Indicate that we are doing something.
+			fmt.Print(".")
+
 			// Get the "weeks" json object.
 			weeksList := statsItem.(map[string]interface{})["weeks"].([]interface{})
 
@@ -147,6 +155,9 @@ func main() {
 
 		// Add the values to the Repository slice.
 		repositories[i].addRepo(repoItem.(map[string]interface{}), statistics, totals)
+
+		// Close the print line.
+		fmt.Print(".done!\n")
 	}
 
 	// Output the repositories in size order.

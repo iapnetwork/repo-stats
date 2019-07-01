@@ -42,5 +42,8 @@ func getJsonResponse(uri string, token string, fixer string) []interface{} {
 
 	// Use type assertion to get the repo list into the correct type.
 	dataList := jsonDataFixed[fixer]
+	//fmt.Printf("dataList: %v", dataList)
+	// try catch below for this error caused by stats not being generated yet:
+	//     panic: interface conversion: interface {} is map[string]interface {}, not []interface {}
 	return dataList.([]interface{})
 }
