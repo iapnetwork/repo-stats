@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"time"
 )
 
 // setRequest creates and sends the request.
@@ -29,6 +30,7 @@ func getJsonResponse(uri string, token string, fixer string) []interface{} {
 
 	// Github returns empty stats data for the first uncached request, so try again.
 	if jsonText == "{}" {
+		time.Sleep(1500 * time.Millisecond)
 		jsonData = setRequest(uri, token)
 		jsonText = string(jsonData)
 	}
